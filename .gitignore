@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production builds
+dist/
+build/
+client/dist/
+
+# Environment variables
+.env
+.env.local
+server/.env
+client/.env
+
+# Temporary / Scratch & Logs
+*.log
+scratch/
+.system_generated/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Archives
+*.zip

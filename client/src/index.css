@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body {
+    background-color: #0B1120;
+    color: #F8FAFC;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Calm modern button styling */
+.btn-neo {
+  @apply font-bold transition-all duration-150 active:scale-[0.98];
+}
+
+/* Card elevation and hover effect */
+.card-neo {
+  @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:hover:border-slate-700;
+}
+
+/* Ticker marquee animation */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 28s linear infinite;
+}
+
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
