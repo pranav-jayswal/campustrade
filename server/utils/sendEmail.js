@@ -19,6 +19,10 @@ const createTransporter = () => {
       user: user.trim(),
       pass: pass.trim().replace(/\s+/g, ''), // Strip whitespace from Google 16-character App Passwords
     },
+    // Strict connection timeouts to prevent hanging Render requests
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
   });
 };
 
@@ -75,9 +79,26 @@ const sendVerificationEmail = async ({ to, code, name }) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[EMAIL SERVICE] Real email dispatched to ${to} (Message ID: ${info.messageId})`);
-    return { success: true, simulated: false, messageId: info.messageId };
+    const sendPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            __timeout: true,
+            error: 'Google SMTP server did not respond within 5 seconds. Google Workspace accounts may block third-party SMTP access; consider using a personal @gmail.com for EMAIL_USER.',
+          }),
+        5000
+      )
+    );
+
+    const raceResult = await Promise.race([sendPromise, timeoutPromise]);
+    if (raceResult && raceResult.__timeout) {
+      console.warn(`[EMAIL TIMEOUT]`, raceResult.error);
+      return { success: false, error: raceResult.error, simulated: true, code };
+    }
+
+    console.log(`[EMAIL SERVICE] Real email dispatched to ${to} (Message ID: ${raceResult.messageId})`);
+    return { success: true, simulated: false, messageId: raceResult.messageId };
   } catch (error) {
     console.error(`[EMAIL SERVICE ERROR] Failed to send email via Gmail SMTP:`, error.message);
     // Graceful fallback so registration flow doesn't break

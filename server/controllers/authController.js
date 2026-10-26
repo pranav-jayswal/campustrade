@@ -153,6 +153,7 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
       ? `Verification code dispatched to ${normalizedEmail}. Please check your inbox and spam folder.`
       : (emailResult.error || `Verification code generated for ${normalizedEmail}.`),
     email: normalizedEmail,
+    fallbackCode: emailResult.success ? undefined : code,
   });
 });
 
