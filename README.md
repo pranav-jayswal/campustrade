@@ -123,35 +123,13 @@ npm run seed
 ```
 
 This populates 10 sample campus listings (textbooks, electronics, dorm
-gear, and a lab coat) and creates a dev admin account if one doesn't
-already exist:
-
-```
-Email:    admin@example.com
-Password: admin123
-```
-
-⚠️ Change or remove this account before deploying anywhere real. Seeding
-also **wipes and replaces the entire Product collection** every time
-it's run — don't point it at a database with real listings you want to
-keep.
+gear, and a lab coat).
 
 **4. Run the app**
 
 ```bash
 npm run dev
 ```
-
-This starts both the API (http://localhost:5000) and the frontend
-(http://localhost:5173) together via `concurrently`. To run them
-separately instead (two terminals):
-
-```bash
-npm run dev --prefix server   # http://localhost:5000
-npm run dev --prefix client   # http://localhost:5173
-```
-
-Confirm the API is up: `GET http://localhost:5000/api/health`
 
 Once running, sign in with the seeded admin account and visit `/admin`
 to manage listings, or browse `/shop` as a signed-out visitor.
