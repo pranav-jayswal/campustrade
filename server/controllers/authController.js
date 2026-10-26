@@ -148,9 +148,10 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
+    emailDelivered: Boolean(emailResult.success),
     message: emailResult.success
       ? `Verification code dispatched to ${normalizedEmail}. Please check your inbox and spam folder.`
-      : `Verification code generated for ${normalizedEmail}.`,
+      : (emailResult.error || `Verification code generated for ${normalizedEmail}.`),
     email: normalizedEmail,
   });
 });

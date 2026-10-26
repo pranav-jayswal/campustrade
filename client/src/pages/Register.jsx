@@ -38,6 +38,7 @@ export default function Register() {
   // Verification state
   const [verificationCode, setVerificationCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [emailStatusInfo, setEmailStatusInfo] = useState({ delivered: true, message: '' });
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,7 +105,15 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      await sendVerificationCode(payload);
+      const res = await sendVerificationCode(payload);
+      if (res && res.emailDelivered === false) {
+        setEmailStatusInfo({
+          delivered: false,
+          message: res.message || 'Render backend is missing EMAIL_USER and EMAIL_PASS environment variables.',
+        });
+      } else {
+        setEmailStatusInfo({ delivered: true, message: '' });
+      }
       setStep('verify');
       setResendCooldown(60);
     } catch (err) {
@@ -159,7 +168,15 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      await sendVerificationCode(payload);
+      const res = await sendVerificationCode(payload);
+      if (res && res.emailDelivered === false) {
+        setEmailStatusInfo({
+          delivered: false,
+          message: res.message || 'Render backend is missing EMAIL_USER and EMAIL_PASS environment variables.',
+        });
+      } else {
+        setEmailStatusInfo({ delivered: true, message: '' });
+      }
       setResendCooldown(60);
     } catch (err) {
       setError(err.response?.data?.message || 'Could not resend code. Please try again.');
@@ -471,14 +488,28 @@ export default function Register() {
               {normalizedEmail}
             </p>
 
-            <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
-              <p className="font-semibold">
-                Please check your Gmail / Email Inbox
-              </p>
-              <p className="mt-1 text-slate-600 dark:text-slate-400">
-                If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
-              </p>
-            </div>
+            {!emailStatusInfo.delivered ? (
+              <div className="mt-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 text-left text-xs text-amber-900 dark:text-amber-200">
+                <p className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300 text-sm">
+                  ⚠️ Action Required on Render:
+                </p>
+                <p className="mt-1 font-medium leading-relaxed">
+                  The backend has not dispatched an email because <strong>EMAIL_USER</strong> and <strong>EMAIL_PASS</strong> (Google App Password) are not yet configured in your Render dashboard environment variables.
+                </p>
+                <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+                  Add them in <strong>Render &gt; Environment</strong> to start delivering real emails to inboxes.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
+                <p className="font-semibold">
+                  Please check your Gmail / Email Inbox
+                </p>
+                <p className="mt-1 text-slate-600 dark:text-slate-400">
+                  If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleVerifyCode} className="mt-6 space-y-5">
               <div>
