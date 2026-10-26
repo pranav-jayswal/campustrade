@@ -37,7 +37,6 @@ export default function Register() {
 
   // Verification state
   const [verificationCode, setVerificationCode] = useState('');
-  const [devCode, setDevCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const [error, setError] = useState('');
@@ -56,17 +55,21 @@ export default function Register() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Compulsory IAR email check for both student and staff
+  // Valid institutional or personal Gmail address for OTP delivery
   const normalizedEmail = (form.email || '').trim().toLowerCase();
-  const isIar = normalizedEmail.endsWith('@iar.ac.in');
+  const isValidEmail =
+    normalizedEmail.endsWith('@iar.ac.in') ||
+    normalizedEmail.endsWith('@gmail.com') ||
+    normalizedEmail.endsWith('.edu') ||
+    normalizedEmail.endsWith('.ac.in');
 
   const handleInitiateRegistration = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Strict IAR email requirement validation
-    if (!isIar) {
-      setError('Only official IAR email addresses (@iar.ac.in) are permitted.');
+    // Email requirement validation
+    if (!isValidEmail) {
+      setError('Please provide a valid official IAR email (@iar.ac.in) or Gmail address (@gmail.com).');
       return;
     }
 
@@ -101,8 +104,7 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      const res = await sendVerificationCode(payload);
-      setDevCode(res.devCode || '');
+      await sendVerificationCode(payload);
       setStep('verify');
       setResendCooldown(60);
     } catch (err) {
@@ -157,8 +159,7 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      const res = await sendVerificationCode(payload);
-      setDevCode(res.devCode || '');
+      await sendVerificationCode(payload);
       setResendCooldown(60);
     } catch (err) {
       setError(err.response?.data?.message || 'Could not resend code. Please try again.');
@@ -249,15 +250,15 @@ export default function Register() {
               <div>
                 <div className="flex items-center justify-between">
                   <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Official IAR Email <span className="text-red-500">*</span>
+                    Campus Email / Google Account <span className="text-red-500">*</span>
                   </label>
                   {form.email && (
                     <span
                       className={`text-[11px] font-bold ${
-                        isIar ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                        isValidEmail ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
                       }`}
                     >
-                      {isIar ? '✓ Valid IAR Email' : 'Must end with @iar.ac.in'}
+                      {isValidEmail ? '✓ Valid Email Address' : 'Use @iar.ac.in or @gmail.com'}
                     </span>
                   )}
                 </div>
@@ -266,13 +267,13 @@ export default function Register() {
                   name="email"
                   type="email"
                   required
-                  placeholder={roleTab === 'student' ? 'e.g. student@iar.ac.in' : 'e.g. staff@iar.ac.in'}
+                  placeholder={roleTab === 'student' ? 'e.g. yourname@iar.ac.in or student@gmail.com' : 'e.g. staff@iar.ac.in or name@gmail.com'}
                   value={form.email}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-1 focus:ring-blue-600 transition"
                 />
                 <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  Compulsory for all accounts: An email ending with <span className="font-bold text-slate-700 dark:text-slate-300">@iar.ac.in</span>. A verification code will be dispatched to this address.
+                  Enter your official <span className="font-bold text-slate-700 dark:text-slate-300">@iar.ac.in</span> university email or <span className="font-bold text-slate-700 dark:text-slate-300">@gmail.com</span>. A 6-digit OTP will be dispatched to this inbox for verification.
                 </p>
               </div>
 
@@ -460,7 +461,7 @@ export default function Register() {
             </div>
 
             <h2 className="mt-4 text-center text-2xl font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
-              Verify Your IAR Email
+              Verify Your Email
             </h2>
 
             <p className="mt-2 text-center text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -470,16 +471,14 @@ export default function Register() {
               {normalizedEmail}
             </p>
 
-            {/* Test helper notice for quick faculty & student evaluation */}
-            {devCode && (
-              <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3 text-center text-xs text-blue-900 dark:text-blue-200">
-                <span className="font-bold">Evaluation Helper:</span> Your verification code is{' '}
-                <span className="font-mono font-extrabold text-blue-700 dark:text-blue-300 tracking-wider text-sm bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
-                  {devCode}
-                </span>{' '}
-                (also logged in terminal).
-              </div>
-            )}
+            <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
+              <p className="font-semibold">
+                Please check your Gmail / Email Inbox
+              </p>
+              <p className="mt-1 text-slate-600 dark:text-slate-400">
+                If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
+              </p>
+            </div>
 
             <form onSubmit={handleVerifyCode} className="mt-6 space-y-5">
               <div>

@@ -8,22 +8,22 @@ const { sendVerificationEmail } = require('../utils/sendEmail');
 // Shared in-memory registered users store for instant testing & offline resilience
 const { inMemoryUsers } = require('../utils/userStore');
 
-// Strict check for IAR Gandhinagar institutional email address
-const isIarEmail = (email) => {
+// Institutional & verified domain check: supports official @iar.ac.in, @gmail.com, and academic institutions
+const isCampusEmail = (email) => {
   const normalized = (email || '').trim().toLowerCase();
-  return normalized.endsWith('@iar.ac.in');
-};
-
-// Check whether an email belongs to a recognized student/academic domain (.edu, .ac.in, etc.)
-const isAcademicEmail = (email) => {
-  const normalized = (email || '').toLowerCase();
-  return isIarEmail(normalized) ||
+  return (
+    normalized.endsWith('@iar.ac.in') ||
+    normalized.endsWith('@gmail.com') ||
     normalized.endsWith('.edu') ||
     normalized.includes('.edu.') ||
     normalized.endsWith('.ac.in') ||
     normalized.endsWith('.ac.uk') ||
-    normalized.endsWith('.edu.au');
+    normalized.endsWith('.edu.au')
+  );
 };
+
+const isIarEmail = isCampusEmail;
+const isAcademicEmail = isCampusEmail;
 
 // Small helper so register/login return the same comprehensive student/staff shape.
 const buildAuthResponse = (user) => ({
@@ -139,8 +139,8 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
     }
   }
 
-  // Dispatch real email via Gmail SMTP (or fallback to console in dev mode)
-  await sendVerificationEmail({
+  // Dispatch real email via Gmail SMTP
+  const emailResult = await sendVerificationEmail({
     to: normalizedEmail,
     code,
     name: name.trim(),
@@ -148,9 +148,10 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: `Verification code sent to ${normalizedEmail}`,
+    message: emailResult.success
+      ? `Verification code dispatched to ${normalizedEmail}. Please check your inbox and spam folder.`
+      : `Verification code generated for ${normalizedEmail}.`,
     email: normalizedEmail,
-    devCode: code,
   });
 });
 

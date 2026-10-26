@@ -16,8 +16,8 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user,
-      pass,
+      user: user.trim(),
+      pass: pass.trim().replace(/\s+/g, ''), // Strip whitespace from Google 16-character App Passwords
     },
   });
 };
