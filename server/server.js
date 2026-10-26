@@ -13,6 +13,9 @@ connectDB();
 
 const app = express();
 
+// Trust reverse proxy (Render, Vercel, Heroku) so express-rate-limit works accurately with X-Forwarded-For
+app.set('trust proxy', 1);
+
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -56,6 +59,7 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
 app.use('/api', apiLimiter);

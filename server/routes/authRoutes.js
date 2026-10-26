@@ -11,14 +11,16 @@ const {
   deleteAccount,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const { sendVerificationEmail } = require('../utils/sendEmail');
 
 const router = express.Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many authentication attempts. Please try again after 15 minutes.' },
 });
 
@@ -48,6 +50,25 @@ router.get('/email-status', (req, res) => {
     gmailSmtpConfigured: hasUser && hasPass,
     maskedSenderEmail: maskedEmail,
   });
+});
+
+router.get('/test-email', async (req, res) => {
+  const targetEmail = (req.query.to || process.env.EMAIL_USER || 'nox665reaper@gmail.com').trim();
+  const testCode = Math.floor(100000 + Math.random() * 900000).toString();
+  try {
+    const result = await sendVerificationEmail({
+      to: targetEmail,
+      code: testCode,
+      name: 'CampusTrade Test',
+    });
+    res.json({
+      targetEmail,
+      result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post('/send-verification-code', authLimiter, sendVerificationCode);
