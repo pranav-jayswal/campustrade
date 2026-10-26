@@ -1,6 +1,82 @@
 const nodemailer = require('nodemailer');
 
 /**
+ * Dispatch via Brevo HTTPS API (Port 443)
+ * Free 300 emails/day, zero outbound port blocks on Render free tier
+ */
+const sendViaBrevo = async ({ to, code, name, htmlContent }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey || !apiKey.trim()) return null;
+
+  try {
+    const senderEmail = (process.env.EMAIL_USER || 'nox665reaper@gmail.com').trim();
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey.trim(),
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'CampusTrade IAR', email: senderEmail },
+        to: [{ email: to, name: name || 'Student' }],
+        subject: `${code} is your CampusTrade verification code`,
+        htmlContent,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      console.log(`[EMAIL SERVICE] Email dispatched via Brevo HTTPS API to ${to} (Message ID: ${data.messageId})`);
+      return { success: true, simulated: false, messageId: data.messageId };
+    } else {
+      console.error(`[BREVO API ERROR]`, data);
+      return { success: false, error: data.message || 'Brevo API error' };
+    }
+  } catch (err) {
+    console.error(`[BREVO NETWORK ERROR]`, err.message);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Dispatch via Resend HTTPS API (Port 443)
+ * Free 3,000 emails/month on Render free tier
+ */
+const sendViaResend = async ({ to, code, name, htmlContent }) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !apiKey.trim()) return null;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'CampusTrade <onboarding@resend.dev>',
+        to: [to],
+        subject: `${code} is your CampusTrade verification code`,
+        html: htmlContent,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      console.log(`[EMAIL SERVICE] Email dispatched via Resend HTTPS API to ${to} (ID: ${data.id})`);
+      return { success: true, simulated: false, messageId: data.id };
+    } else {
+      console.error(`[RESEND API ERROR]`, data);
+      return { success: false, error: data.message || 'Resend API error' };
+    }
+  } catch (err) {
+    console.error(`[RESEND NETWORK ERROR]`, err.message);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
  * Configure Nodemailer transporter.
  * If EMAIL_USER and EMAIL_PASS (App Password) are defined in .env,
  * it delivers genuine emails via Gmail SMTP.
@@ -71,6 +147,22 @@ const sendVerificationEmail = async ({ to, code, name }) => {
       </div>
     </div>
   `;
+
+  // 1. If Brevo API key is configured, send via Brevo HTTPS API (Port 443 - zero block on Render free tier)
+  if (process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim()) {
+    const brevoResult = await sendViaBrevo({ to, code, name, htmlContent });
+    if (brevoResult && brevoResult.success) {
+      return brevoResult;
+    }
+  }
+
+  // 2. If Resend API key is configured, send via Resend HTTPS API (Port 443 - zero block on Render free tier)
+  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim()) {
+    const resendResult = await sendViaResend({ to, code, name, htmlContent });
+    if (resendResult && resendResult.success) {
+      return resendResult;
+    }
+  }
 
   const mailOptions = {
     from: `"IAR CampusTrade" <${process.env.EMAIL_USER}>`,

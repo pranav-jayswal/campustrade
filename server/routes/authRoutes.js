@@ -23,6 +23,8 @@ const authLimiter = rateLimit({
 });
 
 router.get('/email-status', (req, res) => {
+  const hasBrevo = Boolean(process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim());
+  const hasResend = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim());
   const hasUser = Boolean(process.env.EMAIL_USER && process.env.EMAIL_USER.trim());
   const hasPass = Boolean(process.env.EMAIL_PASS && process.env.EMAIL_PASS.trim());
   const senderEmail = hasUser ? process.env.EMAIL_USER.trim() : null;
@@ -30,14 +32,21 @@ router.get('/email-status', (req, res) => {
     ? `${senderEmail.split('@')[0].slice(0, 3)}***@${senderEmail.split('@')[1] || 'gmail.com'}`
     : 'Not configured';
 
+  const provider = hasBrevo
+    ? 'Brevo HTTPS API (Port 443 - Recommended for Render free tier)'
+    : hasResend
+    ? 'Resend HTTPS API (Port 443)'
+    : hasUser && hasPass
+    ? 'Gmail SMTP'
+    : 'None';
+
   res.json({
-    emailServiceConfigured: hasUser && hasPass,
-    senderEmailConfigured: hasUser,
-    passwordConfigured: hasPass,
+    emailServiceConfigured: hasBrevo || hasResend || (hasUser && hasPass),
+    activeProvider: provider,
+    brevoConfigured: hasBrevo,
+    resendConfigured: hasResend,
+    gmailSmtpConfigured: hasUser && hasPass,
     maskedSenderEmail: maskedEmail,
-    instruction: hasUser && hasPass
-      ? 'Gmail SMTP credentials are ready. Real emails will be delivered.'
-      : 'EMAIL_USER and/or EMAIL_PASS are missing in environment variables. Add them in Render dashboard to send real emails.',
   });
 });
 
