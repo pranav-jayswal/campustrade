@@ -472,11 +472,12 @@ export default function Register() {
             </p>
 
             <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
-              <p className="font-semibold">
-                Please check your Gmail / Email Inbox
+              <p className="font-bold text-sm">
+                Check the inbox for {normalizedEmail}
               </p>
               <p className="mt-1 text-slate-600 dark:text-slate-400">
-                A 6-digit code has been dispatched. If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
+                Please make sure you are logged into <strong>{normalizedEmail}</strong> in your Gmail app.
+                Check both your <strong>Primary Inbox</strong> and <strong>Spam / Junk</strong> folder.
               </p>
             </div>
 
