@@ -146,14 +146,15 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
     name: name.trim(),
   });
 
+  if (!emailResult.success) {
+    res.status(500);
+    throw new Error(emailResult.error || 'Failed to dispatch verification email via Gmail. Please try again.');
+  }
+
   res.json({
     success: true,
-    emailDelivered: Boolean(emailResult.success),
-    message: emailResult.success
-      ? `Verification code dispatched to ${normalizedEmail}. Please check your inbox and spam folder.`
-      : (emailResult.error || `Verification code generated for ${normalizedEmail}.`),
+    message: `Verification code dispatched to ${normalizedEmail}. Please check your inbox and spam folder.`,
     email: normalizedEmail,
-    fallbackCode: emailResult.success ? undefined : code,
   });
 });
 

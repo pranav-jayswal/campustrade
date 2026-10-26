@@ -14,15 +14,17 @@ const createTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    family: 4, // Force IPv4 routing on cloud hosts (prevents IPv6 connection hang)
     auth: {
       user: user.trim(),
       pass: pass.trim().replace(/\s+/g, ''), // Strip whitespace from Google 16-character App Passwords
     },
-    // Strict connection timeouts to prevent hanging Render requests
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000,
   });
 };
 
@@ -85,9 +87,9 @@ const sendVerificationEmail = async ({ to, code, name }) => {
         () =>
           resolve({
             __timeout: true,
-            error: 'Google SMTP server did not respond within 5 seconds. Google Workspace accounts may block third-party SMTP access; consider using a personal @gmail.com for EMAIL_USER.',
+            error: 'Google SMTP server did not respond within 8 seconds.',
           }),
-        5000
+        8000
       )
     );
 

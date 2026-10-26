@@ -38,11 +38,6 @@ export default function Register() {
   // Verification state
   const [verificationCode, setVerificationCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [emailStatusInfo, setEmailStatusInfo] = useState({
-    delivered: true,
-    message: '',
-    fallbackCode: '',
-  });
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,16 +104,7 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      const res = await sendVerificationCode(payload);
-      if (res && res.emailDelivered === false) {
-        setEmailStatusInfo({
-          delivered: false,
-          message: res.message || 'Render backend is missing EMAIL_USER and EMAIL_PASS environment variables.',
-          fallbackCode: res.fallbackCode || '',
-        });
-      } else {
-        setEmailStatusInfo({ delivered: true, message: '', fallbackCode: '' });
-      }
+      await sendVerificationCode(payload);
       setStep('verify');
       setResendCooldown(60);
     } catch (err) {
@@ -173,16 +159,7 @@ export default function Register() {
         payload.phone = form.phone.trim();
       }
 
-      const res = await sendVerificationCode(payload);
-      if (res && res.emailDelivered === false) {
-        setEmailStatusInfo({
-          delivered: false,
-          message: res.message || 'Render backend is missing EMAIL_USER and EMAIL_PASS environment variables.',
-          fallbackCode: res.fallbackCode || '',
-        });
-      } else {
-        setEmailStatusInfo({ delivered: true, message: '', fallbackCode: '' });
-      }
+      await sendVerificationCode(payload);
       setResendCooldown(60);
     } catch (err) {
       setError(err.response?.data?.message || 'Could not resend code. Please try again.');
@@ -494,33 +471,14 @@ export default function Register() {
               {normalizedEmail}
             </p>
 
-            {!emailStatusInfo.delivered ? (
-              <div className="mt-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 text-left text-xs text-amber-900 dark:text-amber-200">
-                <p className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300 text-sm">
-                  ⚠️ Notice: Email Delivery Status
-                </p>
-                <p className="mt-1 font-medium leading-relaxed">
-                  {emailStatusInfo.message}
-                </p>
-                {emailStatusInfo.fallbackCode && (
-                  <div className="mt-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/60 text-center shadow-xs">
-                    <span className="text-slate-600 dark:text-slate-400 font-semibold text-xs block mb-1">Testing OTP (Simulated Mode):</span>
-                    <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 tracking-[0.25em] text-lg">
-                      {emailStatusInfo.fallbackCode}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
-                <p className="font-semibold">
-                  Please check your Gmail / Email Inbox
-                </p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400">
-                  If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
-                </p>
-              </div>
-            )}
+            <div className="mt-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/40 p-3.5 text-center text-xs text-blue-900 dark:text-blue-200">
+              <p className="font-semibold">
+                Please check your Gmail / Email Inbox
+              </p>
+              <p className="mt-1 text-slate-600 dark:text-slate-400">
+                A 6-digit code has been dispatched. If the email is not in your inbox after a few moments, please check your <strong>Spam / Junk</strong> folder or click Resend below.
+              </p>
+            </div>
 
             <form onSubmit={handleVerifyCode} className="mt-6 space-y-5">
               <div>
